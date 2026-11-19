@@ -13,7 +13,7 @@ function App() {
   console.log("1. Iniciando envío", {
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   });
-  ...
+    
   try {
     console.log("2. Antes de addDoc");
     await addDoc(collection(db, "registros_prueba"), {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { collection, addDoc, getDocs, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase/config";
 
 function App() {
@@ -7,33 +7,65 @@ function App() {
   const [correo, setCorreo] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [registros, setRegistros] = useState([]);
+  const [cargandoLista, setCargandoLista] = useState(true);
+
+  const obtenerRegistros = async () => {
+    setCargandoLista(true);
+    try {
+      const snapshot = await getDocs(collection(db, "registros_prueba"));
+      const datos = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setRegistros(datos);
+    } catch (error) {
+      console.error("Error al leer registros:", error);
+    } finally {
+      setCargandoLista(false);
+    }
+  };
+
+  useEffect(() => {
+    obtenerRegistros();
+  }, []);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log("1. Iniciando envío", {
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  });
-    
-  try {
-    console.log("2. Antes de addDoc");
-    await addDoc(collection(db, "registros_prueba"), {
-      nombre: nombre.trim(),
-      correo: correo.trim(),
-      creadoEn: serverTimestamp(),
-    });
-    console.log("3. Guardado con éxito");
-    
-  } catch (error) {
-    console.error("4. Error en addDoc:", error);
-  } finally {
-    setEnviando(false);
-  }
-};
+    e.preventDefault();
+    if (!nombre.trim() || !correo.trim()) {
+      setMensaje("Por favor llena nombre y correo.");
+      return;
+    }
+
+    setEnviando(true);
+    setMensaje("");
+
+    try {
+      await addDoc(collection(db, "registros_prueba"), {
+        nombre: nombre.trim(),
+        correo: correo.trim(),
+        creadoEn: serverTimestamp(),
+      });
+      setMensaje("¡Registro guardado!");
+      setNombre("");
+      setCorreo("");
+      await obtenerRegistros();
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      setMensaje("Hubo un error al guardar. Revisa la consola.");
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "40px auto", fontFamily: "sans-serif" }}>
+    <div style={{ maxWidth: "520px", margin: "40px auto", fontFamily: "sans-serif" }}>
       <h2>Prueba React + Firebase</h2>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+      >
         <input
           type="text"
           placeholder="Tu nombre"
@@ -52,7 +84,37 @@ function App() {
           {enviando ? "Enviando..." : "Enviar"}
         </button>
       </form>
+
       {mensaje && <p style={{ marginTop: "12px" }}>{mensaje}</p>}
+
+      <h3 style={{ marginTop: "28px" }}>Registros guardados</h3>
+
+      {cargandoLista ? (
+        <p>Cargando registros...</p>
+      ) : registros.length === 0 ? (
+        <p>Aún no hay registros.</p>
+      ) : (
+        <table
+          border="1"
+          cellPadding="8"
+          style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px" }}
+        >
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {registros.map((item) => (
+              <tr key={item.id}>
+                <td>{item.nombre}</td>
+                <td>{item.correo}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

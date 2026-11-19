@@ -9,31 +9,26 @@ function App() {
   const [enviando, setEnviando] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!nombre.trim() || !correo.trim()) {
-      setMensaje("Por favor llena nombre y correo.");
-      return;
-    }
-
-    setEnviando(true);
-    setMensaje("");
-
-    try {
-      await addDoc(collection(db, "registros_prueba"), {
-        nombre: nombre.trim(),
-        correo: correo.trim(),
-        creadoEn: serverTimestamp(),
-      });
-      setMensaje("¡Listo! Se guardó en Firebase.");
-      setNombre("");
-      setCorreo("");
-    } catch (error) {
-      console.error("Error al guardar:", error);
-      setMensaje("Hubo un error al enviar. Revisa la consola.");
-    } finally {
-      setEnviando(false);
-    }
-  };
+  e.preventDefault();
+  console.log("1. Iniciando envío", {
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  });
+  ...
+  try {
+    console.log("2. Antes de addDoc");
+    await addDoc(collection(db, "registros_prueba"), {
+      nombre: nombre.trim(),
+      correo: correo.trim(),
+      creadoEn: serverTimestamp(),
+    });
+    console.log("3. Guardado con éxito");
+    ...
+  } catch (error) {
+    console.error("4. Error en addDoc:", error);
+  } finally {
+    setEnviando(false);
+  }
+};
 
   return (
     <div style={{ maxWidth: "400px", margin: "40px auto", fontFamily: "sans-serif" }}>

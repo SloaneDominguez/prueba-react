@@ -22,7 +22,7 @@ function App() {
       creadoEn: serverTimestamp(),
     });
     console.log("3. Guardado con éxito");
-    ...
+    
   } catch (error) {
     console.error("4. Error en addDoc:", error);
   } finally {
